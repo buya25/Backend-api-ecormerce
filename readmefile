@@ -1,0 +1,12 @@
+
+
+Requirements
+nodemon
+bodyParser
+express
+dotenv
+mongoose
+cors
+bcryptjs
+jsonwebtoken
+express-jwt
