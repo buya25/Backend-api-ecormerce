@@ -10,3 +10,5 @@ cors
 bcryptjs
 jsonwebtoken
 express-jwt
+ws
+socket.io

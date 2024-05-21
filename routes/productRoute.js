@@ -3,34 +3,74 @@ const { Product } = require('../models/product')
 const { Category } = require('../models/category')
 const productRouter = express.Router()
 const mongoose = require('mongoose')
+const multer = require('multer')
+
+const FILE_TYPE_MAP = {
+    'image/png': 'png',
+    'image/jpeg': 'jpeg',
+    'image/jpg': 'jpg',
+}
+
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const isValid = FILE_TYPE_MAP[file.mimetype]
+        let uploadError = new Error('Invalid image type')
+        if (isValid) {
+            uploadError = null
+        }
+        cb(uploadError, 'public/uploads')
+    },
+    filename: function (req, file, cb) {
+        const fileName = file.originalname.split(' ').join('-')
+        const extension = FILE_TYPE_MAP[file.mimetype]
+        cb(null, `${fileName}-${Date.now()}.${extension}`)
+    },
+})
+
+const uploadOptions = multer({ storage: storage })
 
 /*ADD a Product with values name, description, richDescription, image, brand, price,
 category, countInStock, rating, numReviews, isFeatured*/
-productRouter.post(`/`, async (req, res) => {
-    //find category first before you ADD a new product
-    const category = await Category.findById(req.body.category);
-    if (!category) return res.status(400).send('Invalid Category')
+productRouter.post(`/`, uploadOptions.single('image'), async (req, res) => {
+    try {
+        //validat objectId mongoose
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).send('Invalid Product Id')
+        }
+        //find category first before you ADD a new product
+        const category = await Category.findById(req.body.category)
+        if (!category) return res.status(400).send('Invalid Category')
 
-    const product = new Product({
-        name: req.body.name,
-        description: req.body.description,
-        richDescription: req.body.richDescription,
-        image: req.body.image,
-        brand: req.body.brand,
-        price: req.body.price,
-        category: req.body.category,
-        countInStock: req.body.countInStock,
-        rating: req.body.rating,
-        numReviews: req.body.numReviews,
-        isFeatured: req.body.isFeatured,
-    });
+        const file = req.file
+        if (!file) return res.status(400).send('Invalid Category')
 
-    const detproduct = await product.save();
+        const fileName = req.file.filename
+        const basePath = `${req.protocol}://${req.get('host')}/public/uploads`
 
-    if (!detproduct)
-        return res.status(400).send('The product cannot be created!')
+        const product = new Product({
+            name: req.body.name,
+            description: req.body.description,
+            richDescription: req.body.richDescription,
+            image: `${basePath}${fileName}`,
+            brand: req.body.brand,
+            price: req.body.price,
+            category: req.body.category,
+            countInStock: req.body.countInStock,
+            rating: req.body.rating,
+            numReviews: req.body.numReviews,
+            isFeatured: req.body.isFeatured,
+        })
 
-    res.send(product)
+        const detproduct = await product.save()
+
+        if (!detproduct)
+            return res.status(400).send('The product cannot be created!')
+
+        res.send(product)
+    } catch (error) {
+        //respond to the error
+        res.status(500).json({ error: error.message })
+    }
 })
 
 /*UPDATE the PRODUCT according*/
@@ -95,13 +135,12 @@ productRouter.get('/:id', async (req, res) => {
 productRouter.get('/', async (req, res) => {
     //filter products using category
     //localhost:3000/api/v1/products?categories=23456,234556
-    let filter = {};
+    let filter = {}
     if (req.query.categories) {
         filter = { category: { $in: req.query.categories.split(',') } }
-        }
-        //sort products
-        const productList = await Product.find(filter).populate('category');
-    
+    }
+    //sort products
+    const productList = await Product.find(filter).populate('category')
 
     if (!productList) {
         return res.status(404).send({ message: 'Product not found' })
@@ -119,7 +158,7 @@ productRouter.get(`/get/count`, async (req, res) => {
     res.send({
         productCount: productCount,
     })
-});
+})
 
 //It is not working yet
 /*Products that are isFeatured*/
@@ -135,6 +174,56 @@ productRouter.get(`/get/featured/:count`, async (req, res, next) => {
     } catch (error) {
         console.error(error)
     }
+})
+
+//upload images in the system
+productRouter.put(
+    `/gallery-images/:id`,
+    uploadOptions.array('images', 10),
+    async (req, res) => {
+        //validat objectId mongoose
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).send('Invalid Product Id')
+        }
+
+        const files = req.files
+        let imagesPaths = []
+        const basePath = `${req.protocol}://${req.get('host')}/public/uploads`
+
+        if (files) {
+            files.map((file) => {
+                imagesPaths.push(`${basePath}/${file.filename}`)
+            })
+        }
+
+        const product = await Product.findByIdAndUpdate(
+            req.params.id,
+            {
+                images: imagesPaths,
+            },
+            {
+                new: true,
+            }
+        )
+        if (!product) {
+            return res.status(500).send('The product cannot be updated!')
+        }
+        res.send(product)
+    }
+)
+//delete images in the system
+productRouter.delete(`/gallery-images/:id`, async (req, res) => {
+    //validat objectId mongoose
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).send('Invalid Product Id')
+    }
+    const product = await Product.findById(req.params.id)
+    if (!product) {
+        return res.status(500).send('The product cannot be updated!')
+    }
+    product.images.pop()
+    product.save()
+    res.send(product)
 })
 
 module.exports = productRouter

@@ -12,9 +12,8 @@ const isLogin = (req, res, next) => {
     //get the user id of the token
     // console.log(verified_user);
 
-    req.userAuth = verified_user.user;
-    
-    console.log(verified_user.user);
+    req.userAuth = verified_user.userId;
+
 
     // req.userAuth = userAuth._id;
 

@@ -42,6 +42,14 @@ const userSchema = mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        isFarmer: {
+            type: Boolean,
+            default: false,
+        },
+        isVerified: {
+            type: Boolean,
+            default: false,
+        },
     },
     {
         timestamps: true,
@@ -56,7 +64,8 @@ userSchema.virtual('id').get(function () {
 //send data to json file
 userSchema.set('toJSON', {
     virtuals: true,
-})
+});
 
-exports.User = mongoose.model('User', userSchema)
-exports.userSchema = userSchema
+exports.User = mongoose.model('User', userSchema);
+
+exports.userSchema = userSchema;

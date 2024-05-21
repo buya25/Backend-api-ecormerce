@@ -8,16 +8,16 @@ categoryRouter.post(`/`, async (req, res) => {
         name: req.body.name,
         icon: req.body.icon,
         color: req.body.color,
-    })
+    });
 
-    category = await category.save()
+    category = await category.save();
 
     if (!category) {
-        return res.status(404).send({ message: 'Category not found' })
+        return res.status(404).send({ message: 'Category not found' });
     }
 
-    res.send(category)
-})
+    res.send(category);
+});
 
 //update a specific category using an /:id
 categoryRouter.put('/:id', async (req, res) => {
@@ -34,7 +34,7 @@ categoryRouter.put('/:id', async (req, res) => {
         return res.status(404).send({ message: 'Category not found' })
     }
     res.send(category)
-})
+});
 
 //http://localhost:3000/api/v1/order
 //get all the category
@@ -46,7 +46,7 @@ categoryRouter.get(`/`, async (req, res) => {
     }
 
     res.send(category)
-})
+});
 
 //get a single category just like searching for a specific category using an id
 categoryRouter.get('/:id', async (req, res) => {
@@ -55,7 +55,7 @@ categoryRouter.get('/:id', async (req, res) => {
         return res.status(404).send({ message: 'Category not found' })
     }
     res.send(category)
-})
+});
 
 //delete a category using the :id
 categoryRouter.delete('/:id', (req, res) => {
@@ -76,6 +76,6 @@ categoryRouter.delete('/:id', (req, res) => {
         .catch((err) => {
             return res.status(400).json({ success: false, error: err })
         })
-})
+});
 
 module.exports = categoryRouter
