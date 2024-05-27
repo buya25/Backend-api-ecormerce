@@ -5,6 +5,10 @@ country, phone, status, totalprice, user, dateOrdered
 */
 const orderSchema = mongoose.Schema(
     {
+        product: { 
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product'
+        },
         orderItems: [
             {
                 type: mongoose.Schema.ObjectId,

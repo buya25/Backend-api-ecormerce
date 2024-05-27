@@ -4,6 +4,9 @@ const { Category } = require('../models/category')
 const productRouter = express.Router()
 const mongoose = require('mongoose')
 const multer = require('multer')
+const { User } = require('../models/user')
+const isLogin = require('../helper/isLogin')
+const { populate } = require('../models/loginStats')
 
 const FILE_TYPE_MAP = {
     'image/png': 'png',
@@ -119,17 +122,46 @@ productRouter.delete('/:id', async (req, res) => {
 
 /*GET only one PRODUCT */
 productRouter.get('/:id', async (req, res) => {
-    //validate mongoose :id
-    if (mongoose.isValidObjectId(req.params.id)) {
-        return res.status(400).send('Invalid Product Id')
-    }
 
-    const product = await Product.findById(req.params.id).populate('category')
+    const product = await Product.findById(req.params.id).populate('category').populate({ path: 'reviews'});
+    
     if (!product) {
         return res.status(404).send({ message: 'Product not found' })
     }
-    res.send(product)
-})
+
+    //when the product is found i would like when the user clicks on the products its added to views
+    product.numviews = product.numviews + 1
+    const updatedProduct = await Product.findByIdAndUpdate(
+        req.params.id,
+        product,
+        { new: true }
+    )
+    res.send(updatedProduct)
+});
+
+// Endpoint to purchase a product
+productRouter.post('/purchase/:id', isLogin, async (req, res) => {
+    try {
+
+        const productId = req.params.id;
+        const product = await Product.findById(productId);
+        
+        //check if the product exist in the DB
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Increment the purchases field
+        product.purchases += 1;
+        await product.save();
+
+        res.json({ message: 'Purchase successful', product });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 /*GET ALL the PRODUCTS*/
 productRouter.get('/', async (req, res) => {

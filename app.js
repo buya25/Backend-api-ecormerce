@@ -1,18 +1,13 @@
 const express = require('express')
-const http = require('http')
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
 require('dotenv/config')
 const api = process.env.API_URL
-const { join } = require('node:path')
 const errorHandler = require('./utils/errorHandler')
-const startWebSocketServer = require('./server/websocketServer')
-const { Server } = require('socket.io')
 const isLogin = require('./helper/isLogin')
 
 const app = express()
-const server = http.createServer(app)
 
 //MIDDLEWARE
 app.use(bodyParser.json())
@@ -23,19 +18,27 @@ app.use(errorHandler)
 
 //ROUTERS
 const productRouter = require('./routes/productRoute')
+const reviewRouter = require('./routes/reviewRoute')
+const productstatsRouter = require('./routes/productStats')
 const userRoute = require('./routes/userRoute')
+const userStatsRoute = require('./routes/userStatsRoute')
 const categoryRoute = require('./routes/categoryRoute')
 const orderRoute = require('./routes/orderRoute')
 const loginStatsRoute = require('./routes/loginStatsRoute')
 const farmerRouter = require('./routes/farmersRouter')
 const connectToDatabase = require('./db/db-connect')
+const { getInventoryStatistics } = require('./controller/statisticsController')
 
 app.use(`${api}/products`, productRouter)
+app.use(`${api}/reviews`, reviewRouter)
+app.use(`${api}/products/stats`, productstatsRouter)
 app.use(`${api}/loginStats`, loginStatsRoute)
-app.use(`${api}/users`, userRoute)
-app.use(`${api}/farmers`, farmerRouter)
-app.use(`${api}/categories`, categoryRoute)
-app.use(`${api}/orders`, orderRoute)
+app.use(`${api}/users`, userRoute);
+app.use(`${api}/users/stats`, userStatsRoute);
+app.use(`${api}/farmers`, farmerRouter);
+app.use(`${api}/categories`, categoryRoute);
+app.use(`${api}/orders`, orderRoute);
+app.use(`${api}/stats/`, getInventoryStatistics);
 
 // Specify paths that are exempt from JWT token verification
 
@@ -57,9 +60,6 @@ app.use((req, res, next) => {
 
 //connecting to mongoose database add the name of the database
 connectToDatabase()
-const WebSocket = require('ws')
-const LoginStats = require('./models/loginStats')
-const wss = new WebSocket.Server({ server })
 
 app.get('/', (req, res) => {
     res.send('Hellow world')

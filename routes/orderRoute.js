@@ -1,8 +1,8 @@
-const express = require('express')
-const { Order } = require('../models/order')
-const OrderItem = require('../models/order-items')
-const { populate } = require('dotenv')
-const orderItems = require('../models/order-items')
+const express = require('express');
+const { Order } = require('../models/order');
+const OrderItem = require('../models/order-items');
+const isLogin = require('../helper/isLogin');
+const { Product } = require('../models/product');
 const orderRouter = express.Router()
 
 //http://localhost:3000/api/v1/order
@@ -38,7 +38,8 @@ orderRouter.get(`/:id`, async (req, res) => {
 /*
 I want to make an order
 */
-orderRouter.post(`/`, async (req, res) => {
+orderRouter.post(`/`, isLogin, async (req, res) => {
+
     //try catch error
     try {
         const orderItemsId = await Promise.all(
@@ -48,11 +49,18 @@ orderRouter.post(`/`, async (req, res) => {
                     product: orderitems.product,
                 })
                 //save the orderItemsId and add it to newOrderItem
-                newOrderItem = await newOrderItem.save()
+                newOrderItem = await newOrderItem.save();
+
+                // Decrement the product stock
+            const product = await Product.findById(orderitems.product);
+            if (product) {
+                product.countInStock -= orderitems.quantity;
+                await product.save();
+            }
 
                 return newOrderItem._id
             })
-        )
+        );
 
         //calculate the totalPrice of the order
         const totalPrice = await Promise.all(
@@ -63,7 +71,7 @@ orderRouter.post(`/`, async (req, res) => {
                 const totalPrice = orderItem.product.price * orderItem.quantity
                 return totalPrice
             })
-        )
+        );
 
         const totalPrices = totalPrice.reduce((a, b) => a + b, 0)
 
@@ -81,7 +89,7 @@ orderRouter.post(`/`, async (req, res) => {
             dateOrdered: req.body.dateOrdered,
         })
 
-        const createdOrder = await order.save()
+        const createdOrder = await order.save();
 
         //check if the order is created
         if (!createdOrder) {
@@ -89,12 +97,13 @@ orderRouter.post(`/`, async (req, res) => {
                 .status(400)
                 .send({ message: 'The order cannot be created' })
         }
+
         res.send(createdOrder)
     } catch (error) {
         //respond
         res.status(500).json({ message: error.message })
     }
-})
+});
 
 //update a specific order using an /:id
 orderRouter.put('/:id', async (req, res) => {

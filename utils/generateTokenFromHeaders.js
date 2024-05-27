@@ -1,17 +1,10 @@
-const getTokenFromHeaders = req => {
+const getTokenFromHeaders = (req, res) => {
     //Get token from headers
-    const headerObj = req.headers;
-
-    const token =  headerObj['authorization'].split(" ")[1];
-    
-    if(token !== undefined){
-        return token
-    }else{
-        return{
-            status: 403,
-            message:"No token provided"
-        };
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    if (!token) {
+        throw new Error('Token not found');
     }
+    return token;
 }
 
 module.exports = getTokenFromHeaders;

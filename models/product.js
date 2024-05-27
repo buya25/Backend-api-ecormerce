@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+
 //model for the products
 const productSchema = mongoose.Schema({
     name: {
@@ -35,6 +36,11 @@ const productSchema = mongoose.Schema({
         ref: 'Category',
         required: true,
     },
+    reviews: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Review',
+        require: true
+    }],
     countInStock: {
         type: Number,
         required: true,
@@ -45,7 +51,7 @@ const productSchema = mongoose.Schema({
         type: Number,
         default: 0,
     },
-    numReviews: {
+    numviews: {
         type: Number,
         default: 0,
     },
@@ -53,18 +59,27 @@ const productSchema = mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    purchases: {
+        type: Number,
+        default: 0,
+    },
     dateCreated: {
         type: Date,
         default: Date.now,
     },
-});
+})
 
 productSchema.virtual('id').get(function () {
-    return this._id.toHexString();
-});
+    return this._id.toHexString()
+})
+
+//mark a virtual views from numviews
+productSchema.virtual('views').get(function () {
+    return this.numviews
+})
 
 productSchema.set('toJSON', {
     virtuals: true,
-});
+})
 
-exports.Product = mongoose.model('Product', productSchema);
+exports.Product = mongoose.model('Product', productSchema)

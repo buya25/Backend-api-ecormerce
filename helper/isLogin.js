@@ -8,7 +8,6 @@ const isLogin = (req, res, next) => {
 
     //verify the token
     const  verified_user = verifyToken(token);
-    
     //get the user id of the token
     // console.log(verified_user);
 
