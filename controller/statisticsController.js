@@ -1,16 +1,22 @@
 const { Order } = require('../models/order');
 const { Product } = require('../models/product');
+const { calculateSalesAndRevenue,
+        calculateTotalStock,
+        calculateDaysOnHand, 
+        calculateInventoryAccuracy,
+        calculateCOGS,
+        calculateGMROI,
+        calculateStockouts,
+        calculateOverstockAndObsolescence,
+        calculateSupplierPerformance} = require('../utils/inventoryHelpers');
 
 // Function to calculate inventory statistics
 const getInventoryStatistics = async (req, res) => {
     try {
-        // Get all products
         const products = await Product.find();
 
-        // Calculate total stock levels
-        const totalStock = products.reduce((acc, product) => acc + product.countInStock, 0);
+        const totalStock = calculateTotalStock(products);
 
-        // Fetch all orders with related order items and products
         const orders = await Order.find().populate({
             path: 'orderItems',
             populate: {
@@ -19,25 +25,39 @@ const getInventoryStatistics = async (req, res) => {
             }
         });
 
-        
-        // Calculate total sales and total revenue
-        let totalSales = 0;
-        let totalRevenue = 0;
-        orders.forEach(order => {
-            order.orderItems.forEach(item => {
-                totalSales += item.quantity;
-                totalRevenue += item.quantity * item.product.price;
-            });
-        });
+        const { totalSales, totalRevenue } = calculateSalesAndRevenue(orders);
 
-        // Calculate inventory turnover rate
         const inventoryTurnoverRate = totalSales / totalStock;
 
-        // Send response
+        const averageDaysOnHand = calculateDaysOnHand(products, orders);
+
+        const inventoryAccuracyRate = calculateInventoryAccuracy(products);
+
+        const totalCOGS = calculateCOGS(orders);
+
+        const gmroi = calculateGMROI(totalRevenue, totalCOGS);
+
+        const { stockoutOccurrences, averageStockoutDuration } = calculateStockouts(products);
+
+        const { overstockLevels, obsolescenceRisks } = calculateOverstockAndObsolescence(products);
+
+        const { averageLeadTime, averageDefectRate } = calculateSupplierPerformance(products);
+
         res.json({
             totalStock,
             inventoryTurnoverRate,
-            totalRevenue
+            totalRevenue,
+            averageDaysOnHand,
+            inventoryAccuracyRate,
+            totalCOGS,
+            gmroi,
+            stockoutOccurrences,
+            averageStockoutDuration,
+            overstockLevels,
+            obsolescenceRisks,
+            averageLeadTime,
+            averageDefectRate
+
         });
     } catch (error) {
         console.error(error);

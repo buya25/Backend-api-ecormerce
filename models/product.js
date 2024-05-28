@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const supplier = require('./supplier');
 
 //model for the products
 const productSchema = mongoose.Schema({
@@ -41,6 +42,12 @@ const productSchema = mongoose.Schema({
         ref: 'Review',
         require: true
     }],
+    expectedCount: {
+        type: Number,
+        required: true,
+        min: 0,
+        max: 255,
+    },
     countInStock: {
         type: Number,
         required: true,
@@ -67,19 +74,24 @@ const productSchema = mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-})
+    supplierData: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'SupplierData',
+        require: true
+    },
+});
 
 productSchema.virtual('id').get(function () {
     return this._id.toHexString()
-})
+});
 
 //mark a virtual views from numviews
 productSchema.virtual('views').get(function () {
     return this.numviews
-})
+});
 
 productSchema.set('toJSON', {
     virtuals: true,
-})
+});
 
-exports.Product = mongoose.model('Product', productSchema)
+exports.Product = mongoose.model('Product', productSchema);

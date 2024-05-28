@@ -15,6 +15,18 @@ const userSchema = mongoose.Schema(
             type: String,
             required: true,
         },
+        purchaseHistory: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Order'
+        }],
+        totalSpent: {
+            type: Number,
+            default: 0
+        },
+        totalOrders: {
+            type: Number,
+            default: 0
+        },
         street: {
             type: String,
             default: '',

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getStartOfDay, getStartOfWeek, getStartOfMonth, getStartOfYear } = require('../utils/dateHelpers');
 const { User } = require('../models/user');
+const { getCustomerStatistics } = require('../controller/customerController');
 
 // Endpoint to get the number of new customers
 router.get('/new-customers', async (req, res) => {
@@ -26,5 +27,7 @@ router.get('/new-customers', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+router.get('/customers', getCustomerStatistics);
 
 module.exports = router;
